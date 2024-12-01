@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Harry Potter Invisibility Cloak</title>
+    <style>
+        body {
+            background: url('hogwarts.jpg') no-repeat center center fixed;
+            background-size: cover;
+            font-family: 'Harry Potter', cursive;
+            color: white;
+            text-align: center;
+        }
+        button {
+            background-color: gold;
+            border: none;
+            padding: 10px 20px;
+            font-size: 20px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        video {
+            border: 5px solid gold;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome to the Harry Potter Invisibility Cloak Experience!</h1>
+    <button onclick="startInvisibilityCloak()">Activate Cloak</button>
+    <video id="cloak-feed" autoplay></video>
+
+    <script>
+        function startInvisibilityCloak() {
+            const video = document.getElementById('cloak-feed');
+            video.src = 'http://127.0.0.1:5000/invisibility_cloak';
+ 
+            video.play();
+        }
+    </script>
+</body>
+</html>
