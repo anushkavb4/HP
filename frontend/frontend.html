@@ -4,40 +4,368 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Harry Potter Invisibility Cloak</title>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;600&display=swap" rel="stylesheet">
     <style>
         body {
-            background: url('hogwarts.jpg') no-repeat center center fixed;
+            background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), 
+                        url('hogwarts.jpg') no-repeat center center fixed;
             background-size: cover;
-            font-family: 'Harry Potter', cursive;
-            color: white;
+            font-family: 'Crimson Text', serif;
+            color: #ffd700;
             text-align: center;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
-        button {
-            background-color: gold;
-            border: none;
-            padding: 10px 20px;
-            font-size: 20px;
-            cursor: pointer;
-            border-radius: 5px;
+
+        h1 {
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            margin-bottom: 30px;
         }
-        video {
-            border: 5px solid gold;
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .instructions {
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 20px;
             border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+
+        button {
+            background: linear-gradient(45deg, #ffd700, #ffb347);
+            border: 2px solid #8b0000;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            cursor: pointer;
+            border-radius: 25px;
+            font-family: 'Crimson Text', serif;
+            color: #8b0000;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 20px 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .video-container {
+            position: relative;
+            margin-top: 20px;
+            display: none;
+        }
+
+        video {
+            border: 5px solid #ffd700;
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+            max-width: 100%;
+            height: auto;
+        }
+
+        .loading {
+            display: none;
+            color: #ffd700;
+            font-size: 1.2em;
+            margin-top: 10px;
+        }
+
+        @keyframes glow {
+            0% { text-shadow: 0 0 10px #ffd700; }
+            50% { text-shadow: 0 0 20px #ffd700, 0 0 30px #ff4da6; }
+            100% { text-shadow: 0 0 10px #ffd700; }
+        }
+
+        .magical-text {
+            animation: glow 2s infinite;
+        }
+
+        .error-message {
+            background-color: rgba(139, 0, 0, 0.8);
+            color: #ffd700;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .controls {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .stop-button {
+            background: linear-gradient(45deg, #8b0000, #ff0000);
+            color: #ffd700;
+        }
+
+        .permission-prompt {
+            background-color: rgba(0, 0, 0, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 2px solid #ffd700;
+            display: none;
         }
     </style>
 </head>
 <body>
-    <h1>Welcome to the Harry Potter Invisibility Cloak Experience!</h1>
-    <button onclick="startInvisibilityCloak()">Activate Cloak</button>
-    <video id="cloak-feed" autoplay></video>
+    <div class="container">
+        <h1 class="magical-text">Harry Potter's Invisibility Cloak</h1>
+        
+        <div class="instructions">
+            <p>Welcome to the magical world of Harry Potter! With this enchanted interface, you can experience the power of the invisibility cloak.</p>
+            <p>Instructions:</p>
+            <ol style="text-align: left;">
+                <li>Ensure you're in a well-lit room</li>
+                <li>Allow camera access when prompted</li>
+                <li>Click the "Reveal The Magic" button below</li>
+                <li>Hold up a red cloth to experience the invisibility effect</li>
+                <li>Click "Stop Spell" when you're done</li>
+            </ol>
+        </div>
+
+        <div class="permission-prompt" id="permissionPrompt">
+            This magical experience requires access to your camera. 
+            Please allow access when prompted to experience the invisibility cloak effect.
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
+
+        <div class="controls">
+            <button onclick="startInvisibilityCloak()" id="cloakButton">Reveal The Magic</button>
+            <button onclick="stopCloak()" id="stopButton" class="stop-button" style="display: none;">Stop Spell</button>
+        </div>
+        
+        <div class="video-container" id="videoContainer">
+            <video id="cloak-feed" autoplay></video>
+            <div class="loading" id="loadingText">Preparing the magical experience...</div>
+        </div>
+    </div>
 
     <script>
-        function startInvisibilityCloak() {
-            const video = document.getElementById('cloak-feed');
-            video.src = 'http://127.0.0.1:5000/invisibility_cloak';
- 
-            video.play();
+        // Check if the browser supports getUserMedia
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            showError("Your browser doesn't support the required magic! Please use a modern browser.");
         }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            document.getElementById('cloakButton').disabled = false;
+            document.getElementById('loadingText').style.display = 'none';
+        }
+
+        async function checkBackendHealth() {
+            try {
+                const response = await fetch('http://127.0.0.1:5000/health');
+                if (!response.ok) throw new Error('Backend is not responding');
+                return true;
+            } catch (error) {
+                showError("The magical portal (backend) is not active! Please ensure the backend server is running.");
+                return false;
+            }
+        }
+
+        async function startInvisibilityCloak() {
+            const video = document.getElementById('cloak-feed');
+            const videoContainer = document.getElementById('videoContainer');
+            const loadingText = document.getElementById('loadingText');
+            const button = document.getElementById('cloakButton');
+            const stopButton = document.getElementById('stopButton');
+            const errorMessage = document.getElementById('errorMessage');
+
+            // Reset UI
+            errorMessage.style.display = 'none';
+            button.disabled = true;
+            videoContainer.style.display = 'block';
+            loadingText.style.display = 'block';
+            loadingText.textContent = 'Preparing the magical experience...';
+
+            try {
+                // First check if backend is healthy
+                if (!await checkBackendHealth()) {
+                    return;
+                }
+
+                // Request camera permission and show preview
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        width: 640,
+                        height: 480
+                    } 
+                });
+                
+                video.srcObject = stream;
+                await new Promise((resolve) => {
+                    video.onloadedmetadata = () => {
+                        video.play().then(resolve);
+                    };
+                });
+                
+                loadingText.textContent = 'Camera activated! Stand still for background capture...';
+                
+                // Wait for 3 seconds to let user position themselves
+                await new Promise(resolve => setTimeout(resolve, 3000));
+
+                // Stop the preview stream
+                stream.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
+
+                // Create a new image element for the stream
+                const img = document.createElement('img');
+                img.style.width = '640px';
+                img.style.height = '480px';
+                img.style.border = '5px solid #ffd700';
+                img.style.borderRadius = '15px';
+                img.style.boxShadow = '0 0 30px rgba(255, 215, 0, 0.3)';
+                
+                // Replace video with image
+                video.parentNode.replaceChild(img, video);
+
+                // Connect to Flask backend
+                img.src = "http://127.0.0.1:5000/invisibility_cloak";
+                
+                // Handle image loading and errors
+                await new Promise((resolve, reject) => {
+                    img.onload = () => {
+                        loadingText.style.display = 'none';
+                        button.textContent = 'Spell Active';
+                        stopButton.style.display = 'inline-block';
+                        resolve();
+                    };
+                    
+                    img.onerror = (e) => {
+                        console.error('Stream error:', e);
+                        reject(new Error('Failed to connect to the magical stream'));
+                    };
+
+                    // Set a timeout in case the stream never starts
+                    setTimeout(() => reject(new Error('Stream connection timeout')), 10000);
+                });
+
+            } catch (error) {
+                console.error('Initialization error:', error);
+                if (error.name === 'NotAllowedError') {
+                    showError('Camera access denied! The magic requires camera permission to work.');
+                } else {
+                    showError('Failed to initialize the magic: ' + error.message);
+                }
+                await stopCloak();
+            }
+        }
+
+        let isStoppingCloak = false;  // Flag to prevent multiple stop requests
+
+        async function stopCloak() {
+            if (isStoppingCloak) return;  // Prevent multiple simultaneous stops
+            isStoppingCloak = true;
+
+            const videoContainer = document.getElementById('videoContainer');
+            const button = document.getElementById('cloakButton');
+            const stopButton = document.getElementById('stopButton');
+            const loadingText = document.getElementById('loadingText');
+
+            try {
+                // Disable stop button and show loading
+                stopButton.disabled = true;
+                loadingText.style.display = 'block';
+                loadingText.textContent = 'Stopping the spell...';
+                
+                // Remove the current stream element (could be video or img)
+                const streamElement = videoContainer.querySelector('video, img');
+                if (streamElement) {
+                    if (streamElement.tagName === 'VIDEO' && streamElement.srcObject) {
+                        const tracks = streamElement.srcObject.getTracks();
+                        tracks.forEach(track => track.stop());
+                    }
+                    streamElement.remove();
+                }
+                
+                // Create fresh video element
+                const freshVideo = document.createElement('video');
+                freshVideo.id = 'cloak-feed';
+                freshVideo.autoplay = true;
+                videoContainer.appendChild(freshVideo);
+
+                // Try to stop the backend stream - only once
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 second timeout
+                    
+                    const response = await fetch('http://127.0.0.1:5000/stop', {
+                        signal: controller.signal
+                    });
+                    
+                    clearTimeout(timeoutId);
+                    
+                    if (!response.ok) {
+                        console.log('Backend stop warning:', response.statusText);
+                    }
+                } catch (error) {
+                    if (error.name === 'AbortError') {
+                        console.log('Backend stop request timed out');
+                    } else {
+                        console.log('Backend stop error:', error);
+                    }
+                }
+
+                // Reset UI
+                videoContainer.style.display = 'none';
+                button.disabled = false;
+                button.textContent = 'Reveal The Magic';
+                stopButton.style.display = 'none';
+                stopButton.disabled = false;
+                loadingText.style.display = 'none';
+
+            } catch (error) {
+                console.error('Error in stopCloak:', error);
+                // Still try to reset UI even if there's an error
+                videoContainer.style.display = 'none';
+                button.disabled = false;
+                button.textContent = 'Reveal The Magic';
+                stopButton.style.display = 'none';
+                stopButton.disabled = false;
+                loadingText.style.display = 'none';
+            } finally {
+                isStoppingCloak = false;  // Reset the flag
+            }
+        }
+
+        // Check backend health on page load
+        window.addEventListener('load', checkBackendHealth);
+
+        // Clean up when the page is closed or refreshed
+        window.addEventListener('beforeunload', async () => {
+            try {
+                await fetch('http://127.0.0.1:5000/stop', {
+                    method: 'GET',
+                    keepalive: true
+                });
+            } catch (error) {
+                console.log('Cleanup error:', error);
+            }
+        });
     </script>
 </body>
 </html>
